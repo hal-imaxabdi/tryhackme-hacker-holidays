@@ -9,7 +9,65 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
-
+<style>
+  /* index-page-only tweaks, kept local so the shared stylesheet stays untouched */
+  .hero{
+    position:relative;
+    padding:0;
+    text-align:left;
+    overflow:hidden;
+    border-radius:0 0 22px 22px;
+    margin-bottom:56px;
+  }
+  .hero-img{
+    position:relative;
+    width:100%;
+    height:clamp(320px, 46vw, 480px);
+  }
+  .hero-img img{
+    width:100%; height:100%; object-fit:cover; object-position:center 65%;
+    filter:saturate(.9);
+  }
+  .hero-img::after{
+    content:"";
+    position:absolute; inset:0;
+    background:
+      linear-gradient(0deg, var(--bg) 0%, rgba(10,18,32,.72) 32%, rgba(10,18,32,.28) 62%, rgba(10,18,32,.08) 100%),
+      linear-gradient(100deg, rgba(10,18,32,.85) 0%, rgba(10,18,32,.35) 45%, rgba(10,18,32,.1) 70%);
+  }
+  .hero-text{
+    position:absolute; left:0; right:0; bottom:0;
+    padding:0 24px 34px;
+    max-width:var(--maxw);
+    margin:0 auto;
+  }
+  .hero-eyebrow{
+    font-family:var(--font-mono);
+    font-size:.8rem;
+    letter-spacing:.08em;
+    color:var(--teal);
+    margin:0 0 10px;
+  }
+  .hero-text h1{
+    font-family:var(--font-display);
+    font-size:clamp(2.1rem, 4.6vw, 3.6rem);
+    line-height:1.05;
+    margin:0 0 12px;
+    letter-spacing:-.01em;
+    max-width:700px;
+  }
+  .hero-text h1 .accent{ color:var(--gold); }
+  .hero-text p.sub{
+    max-width:560px;
+    color:var(--text-muted);
+    font-size:1.02rem;
+    margin:0;
+  }
+  @media (max-width:640px){
+    .hero-img{ height:340px; }
+    .hero-img img{ object-position:center 60%; }
+  }
+</style>
 </head>
 <body>
 <header class="topbar">
@@ -18,16 +76,19 @@
     <nav class="topnav">
       <a href="index.html" class="current">Intro</a>
       <a href="index.html#doors">Write-ups</a>
-      <a href="https://tryhackme.com/room/hackerholidays" target="_blank" rel="noopener">TryHackMe Room ↗</a>
     </nav>
   </div>
 </header>
 <main>
-  <section class="hero wrap">
-    <div class="eyebrow"><span class="pulse"></span> TryHackMe · Dec 1–14</div>
-    <h1>Hacker <span class="accent">Holidays</span></h1>
-    <p class="sub">A 14-door write-up log from The Byte Lotus resort — OSINT, prompt injection, cloud misconfigs, web exploits, and forensics, solved one day at a time.</p>
-    <div class="lights"><svg viewBox="0 0 500 28" xmlns="http://www.w3.org/2000/svg"><path d="M0,4 Q250.0,34 500,4" stroke="var(--border)" stroke-width="1.5" fill="none"/><circle class="bulb" cx="19" cy="14" r="4.5" fill="var(--gold)"/><circle class="bulb" cx="57" cy="14" r="4.5" fill="var(--gold)"/><circle class="bulb" cx="96" cy="14" r="4.5" fill="var(--gold)"/><circle class="bulb" cx="134" cy="14" r="4.5" fill="var(--gold)"/><circle class="bulb" cx="173" cy="14" r="4.5" fill="var(--gold)"/><circle class="bulb" cx="211" cy="14" r="4.5" fill="var(--gold)"/><circle class="bulb" cx="250" cy="14" r="4.5" fill="var(--gold)"/><circle class="bulb" cx="288" cy="14" r="4.5" fill="var(--gold)"/><circle class="bulb" cx="326" cy="14" r="4.5" fill="var(--gold)"/><circle class="bulb" cx="365" cy="14" r="4.5" fill="var(--gold)"/><circle class="bulb" cx="403" cy="14" r="4.5" fill="var(--gold)"/><circle class="bulb" cx="442" cy="14" r="4.5" fill="var(--gold)"/><circle class="bulb" cx="480" cy="14" r="4.5" fill="var(--gold)"/></svg></div>
+  <section class="hero">
+    <div class="hero-img">
+      <img src="images/hero-resort.png" alt="The Byte Lotus resort at sunset, the fictional setting for the Hacker Holidays challenges">
+    </div>
+    <div class="hero-text">
+      <p class="hero-eyebrow">TRYHACKME · JUL 27 → AUG 9</p>
+      <h1>Hacker <span class="accent">Holidays</span></h1>
+      <p class="sub">A write-up log from The Byte Lotus resort — OSINT, prompt injection, cloud misconfigs, web exploits, and forensics, solved one day at a time.</p>
+    </div>
   </section>
 
   <section class="wrap">
@@ -35,7 +96,7 @@
       <div class="stat"><div class="num">14</div><div class="label">Challenges solved</div></div>
       <div class="stat"><div class="num">7</div><div class="label">Categories</div></div>
       <div class="stat"><div class="num">1</div><div class="label">Hard rooms</div></div>
-      <div class="stat"><div class="num" style="font-size:1.3rem;">Dec 1–14</div><div class="label">Event window</div></div>
+      <div class="stat"><div class="num" style="font-size:1.3rem;">Jul 27 – Aug 9</div><div class="label">Event window</div></div>
     </div>
   </section>
 
@@ -43,7 +104,7 @@
     <div class="intro-card">
       <h2>How this went</h2>
       
-<p>Between <strong>December 1–14, 2025</strong>, TryHackMe ran <strong>Hacker Holidays</strong> — an advent-calendar-style CTF built around a fictional resort, <strong>The Byte Lotus</strong>. Each day unlocked a new "room": a self-contained challenge spanning OSINT, AI / prompt-injection, cloud misconfiguration, web exploitation, digital forensics, and full boot2root machines.</p>
+<p>Starting <strong>July 27</strong> and running for <strong>14 days straight</strong>, TryHackMe ran <strong>Hacker Holidays</strong> — an advent-calendar-style CTF built around a fictional resort, <strong>The Byte Lotus</strong>. Each day unlocked a new "room": a self-contained challenge spanning OSINT, AI / prompt-injection, cloud misconfiguration, web exploitation, digital forensics, and full boot2root machines.</p>
 <p>I worked through <strong>14 rooms</strong> across the event, documenting my process end to end — recon, the dead ends, the actual exploitation steps, and the final flag for each one. The write-ups below follow the order I solved them in, from a straightforward OSINT/AI-fingerprint hunt on Day 0 up to a full disk-forensics investigation on Day 14.</p>
 <p>Difficulty ramps up as the event goes on: the first few days are <strong>Easy</strong> recon and web basics, the middle stretch moves into <strong>Medium</strong> boot2root machines and cloud exploitation, and the last couple of rooms are <strong>Hard</strong> forensics work reconstructing attacker activity from a compromised device.</p>
 
