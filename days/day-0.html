@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Day 00 · The Brochure — Hacker Holidays</title>
+<meta name="description" content="Write-ups for TryHackMe's Hacker Holidays 13-day CTF: OSINT, AI security, web exploitation, cloud, forensics and boot2root.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../styles.css">
+
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html">Hacker<span class="dot">.</span>Holidays</a>
+    <nav class="topnav">
+      <a href="../index.html">Intro</a>
+      <a href="../index.html#doors" class="current">Write-ups</a>
+      <a href="https://tryhackme.com/room/hackerholidays" target="_blank" rel="noopener">TryHackMe Room ↗</a>
+    </nav>
+  </div>
+</header>
+<div class="day-shell">
+  <aside class="sidebar">
+  <a class="back" href="../index.html">← Back to intro</a>
+  <button class="mobile-toggle" type="button">Jump to a day <span class="arrow">▾</span></button>
+  <div class="sidebar-title">All doors</div>
+  <ul><li><a class="active" href="day-0.html"><span class="n">00</span>The Brochure</a></li><li><a class="" href="day-1.html"><span class="n">01</span>The Concierge Knows Too Much</a></li><li><a class="" href="day-2.html"><span class="n">02</span>Room 404</a></li><li><a class="" href="day-3.html"><span class="n">03</span>Complimentary</a></li><li><a class="" href="day-4.html"><span class="n">04</span>Packed Light</a></li><li><a class="" href="day-5.html"><span class="n">05</span>Beach Bar</a></li><li><a class="" href="day-6.html"><span class="n">06</span>Overheard at Breakfast</a></li><li><a class="" href="day-7.html"><span class="n">07</span>Do Not Disturb</a></li><li><a class="" href="day-8.html"><span class="n">08</span>Towel on the sunbed</a></li><li><a class="" href="day-9.html"><span class="n">09</span>CryptoCabana</a></li><li><a class="" href="day-10.html"><span class="n">10</span>The Hollow Shell</a></li><li><a class="" href="day-12.html"><span class="n">12</span>After Hours</a></li><li><a class="" href="day-13.html"><span class="n">13</span>The Guestbook</a></li><li><a class="" href="day-14.html"><span class="n">14</span>Management Wants a Word</a></li></ul>
+</aside>
+  <main class="day-main">
+    <div class="day-header">
+      <div class="badge-row">
+        <span class="badge day">DOOR 00</span>
+        <span class="badge cat">OSINT</span>
+        <span class="badge diff-easy">Easy</span>
+      </div>
+      <h1>The Brochure</h1>
+    </div>
+    <div class="content">
+      <figure class="shot"><img src="../images/image86.png" alt="" loading="lazy"></figure>
+<h2>Challenge Summary</h2>
+<p>The task provides a promotional brochure image for a fictional resort, &quot;The Byte Lotus Resort,&quot; along with a short in-fiction hint: a social media post from @0xMia claiming the brochure&#x27;s hero photo &quot;is giving... suspiciously perfect .&quot;</p>
+<p>The room description adds that the photo &quot;carries an unmistakable AI fingerprint, and the account behind it leads somewhere the hotel never intended you to look.&quot;</p>
+<p>Objectives:</p>
+<ul><li>Analyze the provided image for embedded clues</li><li>Apply OSINT techniques to trace the findings</li><li>Locate a hidden social media account</li><li>Retrieve the flag</li></ul>
+<figure class="shot"><img src="../images/image95.png" alt="" loading="lazy"></figure>
+<h2>Step 1: Initial File Analysis</h2>
+<p>Before jumping into social media, I ran standard forensic checks on the provided PNG to rule out anything hidden directly in the file:</p>
+<ul><li>Checked for EXIF metadata  none present (PNG doesn&#x27;t carry EXIF by default, and none had been injected)</li><li>Checked PNG text chunks / img.info  empty, no custom tEXt/iTXt chunks</li><li>Ran strings on the file ; only compressed pixel-data noise, no readable strings, links, or usernames</li></ul>
+<p>Conclusion: nothing was hidden inside the file via steganography or metadata. The clue had to be visual, not embedded data.</p>
+<h2>Step 2. Spotting the AI Fingerprint</h2>
+<p>Re-reading the brief: &quot;the hero photo carries an unmistakable AI fingerprint.&quot; That&#x27;s a direct pointer to look at the image itself rather than its metadata.</p>
+<p>I cropped and zoomed into the corners of the image (where AI generation watermarks are typically placed) and boosted contrast/brightness on the crop. In the bottom-right corner, a faint watermark reading:</p>
+<figure class="shot"><img src="../images/image96.png" alt="" loading="lazy"></figure>
+<p>PLAYGROUND AI became visible. This confirmed the brief&#x27;s claim. the &quot;hero photo&quot; is AI-generated, and the watermark is the fingerprint the room is asking us to notice.</p>
+<h2>Step 3  Pivoting to OSINT (the account behind the image)</h2>
+<p>The next line of the hint  &quot;the account behind it leads somewhere the hotel never intended you to look&quot;  is the real pivot point. Rather than continuing to dig into the file, I switched to searching social media.</p>
+<p>Searching Instagram for &quot;The Byte Lotus Resort&quot; surfaces the resort&#x27;s official account: @thebytelotusresort.</p>
+<figure class="shot"><img src="../images/image46.png" alt="" loading="lazy"></figure>
+<h2>Step 4  Checking the Following List</h2>
+<p>Instead of scrolling the resort&#x27;s posts, I checked who the account follows (its &quot;Following&quot; list, not &quot;Followers&quot;)  a classic OSINT pivot, since a following list is often smaller and more curated than a follower list, and can reveal a deliberately-linked account.</p>
+<p>The resort&#x27;s account followed exactly one account:</p>
+<figure class="shot"><img src="../images/image31.png" alt="" loading="lazy"></figure>
+<p>@veratheconcierge</p>
+<p>This lines up with the brochure text itself, which name-drops &quot;VERA&quot; as the hotel&#x27;s AI concierge confirming this was the right pivot.</p>
+<h2>Step 5  Finding the Hidden Payload</h2>
+<p>@veratheconcierge&#x27;s profile contains only a handful of posts. Viewed as a grid (thumbnail view), the posts show a large string of text overlaid across all three images but Instagram&#x27;s grid view crops and adds thin borders between adjacent thumbnails, which cuts off a few characters right at each seam.</p>
+<figure class="shot"><img src="../images/image62.png" alt="" loading="lazy"></figure>
+<p>To get a clean read, I opened each of the three posts individually (full-size view) instead of relying on the cropped grid thumbnails:</p>
+<figure class="shot"><img src="../images/image75.png" alt="" loading="lazy"></figure>
+<div class="tbl-wrap"><table class="data"><thead><tr><th>Post</th><th>Text</th></tr></thead><tbody><tr><td>1</td><td>VEhNe1YzckBzX2FD</td></tr><tr><td>2</td><td>QzB1bnRfaDRzX2Iz</td></tr><tr><td>3</td><td>M25fZjB1bmQhfQ==</td></tr></tbody></table></div>
+<p>Concatenated in order:</p>
+<div class="code-block"><div class="code-bar"><span></span><span></span><span></span></div><pre>VEhNe1YzckBzX2FDQzB1bnRfaDRzX2IzM25fZjB1bmQhfQ==</pre></div>
+<p>This is a Base64-encoded string.</p>
+<h2>Step 6; Decoding</h2>
+<div class="code-block"><div class="code-bar"><span></span><span></span><span></span></div><pre>echo &#x27;VEhNe1YzckBzX2FDQzB1bnRfaDRzX2IzM25fZjB1bmQhfQ==&#x27; | base64 -d
+Output:
+THM{xxxxxxx}</pre></div>
+<h3>A gotcha worth noting</h3>
+<p>My first decode attempt produced garbage in the middle of an otherwise-readable string (h4s_is3n_f0und instead of h4s_b33n_f0und).</p>
+<p>The cause: in the sans-serif font used for the overlay text, a capital I and lowercase l render almost identically.</p>
+<p>I had transcribed post 2&#x27;s string with a lowercase l (X2lz) instead of the correct capital I (X2Iz). Since Base64 is case-sensitive, this small misread was enough to corrupt the decoded output.</p>
+<p>Lesson: when a decoded string comes out mostly readable with one garbled chunk, suspect a character misread rather than a wrong pivot  especially for visually similar characters like l/I/1, O/0, or S/5.</p>
+<h2>Key Takeaways</h2>
+<ul><li>Not every image challenge is a steganography challenge — check metadata/hidden files first, but don&#x27;t stop there.</li><li>Read the challenge flavor text closely; it often contains the actual investigative lead (here, &quot;the account behind it&quot;).</li><li>A &quot;Following&quot; list can be a more targeted pivot point than a follower list, especially when an account follows very few others.</li><li>Grid/thumbnail views on social platforms can crop or obscure image content — always check the full-resolution individual post before transcribing text from an image.</li><li>Base64 is case-sensitive; visually ambiguous characters (l/I/1, O/0) are a common source of decode errors;re-check your transcription if a decode looks almost right.</li></ul>
+<h2>Tools Used</h2>
+<ul><li>Python (PIL) for image cropping, zooming, and contrast enhancement</li><li>strings for basic file inspection</li><li>Instagram (manual OSINT following list, profile posts)</li><li>base64 (CLI) for decoding</li></ul>
+    </div>
+    <div class="day-pager"><span></span><a class="pager-btn next" href="day-1.html"><span class="lbl">Next →</span><span class="ttl">Day 01 · The Concierge Knows Too Much</span></a></div>
+  </main>
+</div>
+<footer>
+  <div class="wrap">
+    Built for the TryHackMe <strong style="color:var(--text-muted)">Hacker Holidays</strong> event · write-ups for learning purposes only.<br>
+    <a href="https://tryhackme.com" target="_blank" rel="noopener">TryHackMe</a> · <a href="../index.html">Back to top</a>
+  </div>
+</footer>
+
+<script src="../script.js"></script>
+</body>
+</html>

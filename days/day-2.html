@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Day 02 · Room 404 — Hacker Holidays</title>
+<meta name="description" content="Write-ups for TryHackMe's Hacker Holidays 13-day CTF: OSINT, AI security, web exploitation, cloud, forensics and boot2root.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../styles.css">
+
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html">Hacker<span class="dot">.</span>Holidays</a>
+    <nav class="topnav">
+      <a href="../index.html">Intro</a>
+      <a href="../index.html#doors" class="current">Write-ups</a>
+      <a href="https://tryhackme.com/room/hackerholidays" target="_blank" rel="noopener">TryHackMe Room ↗</a>
+    </nav>
+  </div>
+</header>
+<div class="day-shell">
+  <aside class="sidebar">
+  <a class="back" href="../index.html">← Back to intro</a>
+  <button class="mobile-toggle" type="button">Jump to a day <span class="arrow">▾</span></button>
+  <div class="sidebar-title">All doors</div>
+  <ul><li><a class="" href="day-0.html"><span class="n">00</span>The Brochure</a></li><li><a class="" href="day-1.html"><span class="n">01</span>The Concierge Knows Too Much</a></li><li><a class="active" href="day-2.html"><span class="n">02</span>Room 404</a></li><li><a class="" href="day-3.html"><span class="n">03</span>Complimentary</a></li><li><a class="" href="day-4.html"><span class="n">04</span>Packed Light</a></li><li><a class="" href="day-5.html"><span class="n">05</span>Beach Bar</a></li><li><a class="" href="day-6.html"><span class="n">06</span>Overheard at Breakfast</a></li><li><a class="" href="day-7.html"><span class="n">07</span>Do Not Disturb</a></li><li><a class="" href="day-8.html"><span class="n">08</span>Towel on the sunbed</a></li><li><a class="" href="day-9.html"><span class="n">09</span>CryptoCabana</a></li><li><a class="" href="day-10.html"><span class="n">10</span>The Hollow Shell</a></li><li><a class="" href="day-12.html"><span class="n">12</span>After Hours</a></li><li><a class="" href="day-13.html"><span class="n">13</span>The Guestbook</a></li><li><a class="" href="day-14.html"><span class="n">14</span>Management Wants a Word</a></li></ul>
+</aside>
+  <main class="day-main">
+    <div class="day-header">
+      <div class="badge-row">
+        <span class="badge day">DOOR 02</span>
+        <span class="badge cat">Web;  Directory Enumeration</span>
+        <span class="badge diff-easy">Easy</span>
+      </div>
+      <h1>Room 404</h1>
+    </div>
+    <div class="content">
+      <figure class="shot"><img src="../images/image21.png" alt="" loading="lazy"></figure>
+<h2>Summary</h2>
+<p>The Byte Lotus guest-experience platform was deployed straight from its staging build, complete with an exposed .git directory served publicly over the web server.</p>
+<p>The .git folder was fully reachable file-by-file (directory listing off, but every internal git object still directly fetchable), allowing the entire repository  including its commit history — to be reconstructed offline. The flag was left in plaintext in the project&#x27;s README.md, explicitly marked as something to &quot;remove before launch.&quot;</p>
+<p>Vulnerability: Exposed .git directory on a production/staging web server → full source code and history disclosure.</p>
+<h2>1. Initial Recon</h2>
+<p>The target served a Flask (Werkzeug) app on port 8080:</p>
+<p>bash</p>
+<div class="code-block"><div class="code-bar"><span></span><span></span><span></span></div><pre>curl -i http://10.49.134.167:8080/</pre></div>
+<figure class="shot"><img src="../images/image39.png" alt="" loading="lazy"></figure>
+<p>The page footer read:</p>
+<p>BYTE LOTUS HOSPITALITY GROUP · guest experience platform · build staging</p>
+<p>The word &quot;staging&quot; is the tell staging builds are exactly where .git folders, debug flags, and leftover secrets tend to get shipped by accident.</p>
+<h2>2. Discovering the Exposed .git Directory</h2>
+<p>Checked for the classic leaked-git-repo indicator:</p>
+<figure class="shot"><img src="../images/image24.png" alt="" loading="lazy"></figure>
+<p>A 200 OK with valid git ref content confirms the .git directory is directly web-accessible,  a critical source disclosure vulnerability.</p>
+<h2>3. Dumping the Repository with wget</h2>
+<p>Since individual known files (like .git/HEAD) were directly fetchable even without listing, mirrored the .git tree recursively, which succeeded by following the predictable internal file structure (refs, logs, objects, etc.) that git itself exposes via generated index.html links on this server:</p>
+<div class="code-block"><div class="code-bar"><span></span><span></span><span></span></div><pre>wget --mirror --no-parent -e robots=off -r http://10.49.134.167:8080/.git/</pre></div>
+<figure class="shot"><img src="../images/image32.png" alt="" loading="lazy"></figure>
+<p>This pulled down the full .git metadata directory, including:</p>
+<ul><li>HEAD, config, index</li><li>refs/heads/main, logs/HEAD</li><li>All reachable loose objects under .git/objects/</li></ul>
+<h2>4. Reconstructing the Working Tree</h2>
+<p>Moved into the dumped directory and let git rebuild the actual source files from the recovered objects:</p>
+<div class="shot-row"><figure class="shot"><img src="../images/image34.png" alt="" loading="lazy"></figure><figure class="shot"><img src="../images/image45.png" alt="" loading="lazy"></figure></div>
+<p>Changes not staged for commit:</p>
+<p>deleted:    README.md</p>
+<p>deleted:    app.js</p>
+<p>deleted:    index.html</p>
+<p>Updated 3 paths from the index</p>
+<p>All 3 tracked files were successfully restored from the dumped objects ,  confirming wget had grabbed every object needed (a small repo with only 5 loose objects made this straightforward, no packfiles required).</p>
+<h2>5. Reading the Recovered Source</h2>
+<div class="code-block"><div class="code-bar"><span></span><span></span><span></span></div><pre>ls -la
+cat README.md</pre></div>
+<figure class="shot"><img src="../images/image29.png" alt="" loading="lazy"></figure>
+<p>Internal staging repository for the guest app and concierge</p>
+<p>personalization service. Do not deploy this folder to production.</p>
+<div class="code-block"><div class="code-bar"><span></span><span></span><span></span></div><pre>Staging flag (remove before launch): THM{byt3_l0tus_n3v3r_f0rg3ts}</pre></div>
+<p>The flag was left directly in the README, a deliberate &quot;leftover secret&quot; planted to demonstrate the impact of shipping a .git folder to a public web root.</p>
+<p>7. Flag</p>
+<div class="code-block"><div class="code-bar"><span></span><span></span><span></span></div><pre>THM{byt3_l0tus_n3v3r_f0rg3ts}</pre></div>
+<h2>Root Cause &amp; Remediation</h2>
+<div class="tbl-wrap"><table class="data"><thead><tr><th>Issue</th><th>Fix</th></tr></thead><tbody><tr><td>.git directory deployed inside the public web root</td><td>Never deploy the repository folder itself; deploy only the built/exported application artifacts</td></tr><tr><td>No server-side block on dotfiles/.git</td><td>Add explicit web server rules to deny access to .git, .env, and other dotfiles/directories (e.g. location ~ /\.git { deny all; } in nginx, or equivalent in Flask/Werkzeug static config)</td></tr><tr><td>Secrets committed to source control, even temporarily</td><td>Never commit real or placeholder secrets &quot;to remove before launch&quot; — use .gitignore and environment variables from the start; assume anything ever committed is permanently recoverable from history</td></tr><tr><td>Staging build served without hardening</td><td>Treat staging environments with the same access controls as production, since they&#x27;re frequently just as exposed</td></tr></tbody></table></div>
+    </div>
+    <div class="day-pager"><a class="pager-btn prev" href="day-1.html"><span class="lbl">← Previous</span><span class="ttl">Day 01 · The Concierge Knows Too Much</span></a><a class="pager-btn next" href="day-3.html"><span class="lbl">Next →</span><span class="ttl">Day 03 · Complimentary</span></a></div>
+  </main>
+</div>
+<footer>
+  <div class="wrap">
+    Built for the TryHackMe <strong style="color:var(--text-muted)">Hacker Holidays</strong> event · write-ups for learning purposes only.<br>
+    <a href="https://tryhackme.com" target="_blank" rel="noopener">TryHackMe</a> · <a href="../index.html">Back to top</a>
+  </div>
+</footer>
+
+<script src="../script.js"></script>
+</body>
+</html>
