@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Day 00 · The Brochure — Hacker Holidays</title>
+<title>Day 00 · The Brochure - Hacker Holidays</title>
 <meta name="description" content="Write-ups for TryHackMe's Hacker Holidays 13-day CTF: OSINT, AI security, web exploitation, cloud, forensics and boot2root.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,23 +13,23 @@
 </head>
 <body>
 <div class="day-shell">
-  <aside class="sidebar">
-  <a class="back" href="../index.html">← Back to intro</a>
-  <button class="mobile-toggle" type="button">Jump to a day <span class="arrow">▾</span></button>
-  <div class="sidebar-title">All doors</div>
-  <ul><li><a class="active" href="day-0.html"><span class="n">00</span>The Brochure</a></li><li><a class="" href="day-1.html"><span class="n">01</span>The Concierge Knows Too Much</a></li><li><a class="" href="day-2.html"><span class="n">02</span>Room 404</a></li><li><a class="" href="day-3.html"><span class="n">03</span>Complimentary</a></li><li><a class="" href="day-4.html"><span class="n">04</span>Packed Light</a></li><li><a class="" href="day-5.html"><span class="n">05</span>Beach Bar</a></li><li><a class="" href="day-6.html"><span class="n">06</span>Overheard at Breakfast</a></li><li><a class="" href="day-7.html"><span class="n">07</span>Do Not Disturb</a></li><li><a class="" href="day-8.html"><span class="n">08</span>Towel on the sunbed</a></li><li><a class="" href="day-9.html"><span class="n">09</span>CryptoCabana</a></li><li><a class="" href="day-10.html"><span class="n">10</span>The Hollow Shell</a></li><li><a class="" href="day-12.html"><span class="n">12</span>After Hours</a></li><li><a class="" href="day-13.html"><span class="n">13</span>The Guestbook</a></li><li><a class="" href="day-14.html"><span class="n">14</span>Management Wants a Word</a></li></ul>
+ <aside class="sidebar">
+ <a class="back" href="../index.html">← Back to intro</a>
+ <button class="mobile-toggle" type="button">Jump to a day <span class="arrow">▾</span></button>
+ <div class="sidebar-title">All doors</div>
+ <ul><li><a class="active" href="day-0.html"><span class="n">00</span>The Brochure</a></li><li><a class="" href="day-1.html"><span class="n">01</span>The Concierge Knows Too Much</a></li><li><a class="" href="day-2.html"><span class="n">02</span>Room 404</a></li><li><a class="" href="day-3.html"><span class="n">03</span>Complimentary</a></li><li><a class="" href="day-4.html"><span class="n">04</span>Packed Light</a></li><li><a class="" href="day-5.html"><span class="n">05</span>Beach Bar</a></li><li><a class="" href="day-6.html"><span class="n">06</span>Overheard at Breakfast</a></li><li><a class="" href="day-7.html"><span class="n">07</span>Do Not Disturb</a></li><li><a class="" href="day-8.html"><span class="n">08</span>Towel on the sunbed</a></li><li><a class="" href="day-9.html"><span class="n">09</span>CryptoCabana</a></li><li><a class="" href="day-10.html"><span class="n">10</span>The Hollow Shell</a></li><li><a class="" href="day-12.html"><span class="n">12</span>After Hours</a></li><li><a class="" href="day-13.html"><span class="n">13</span>The Guestbook</a></li><li><a class="" href="day-14.html"><span class="n">14</span>Management Wants a Word</a></li></ul>
 </aside>
-  <main class="day-main">
-    <div class="day-header">
-      <div class="badge-row">
-        <span class="badge day">DOOR 00</span>
-        <span class="badge cat">OSINT</span>
-        <span class="badge diff-easy">Easy</span>
-      </div>
-      <h1>The Brochure</h1>
-    </div>
-    <div class="content">
-      <figure class="shot"><img src="../images/image86.png" alt="" loading="lazy"></figure>
+ <main class="day-main">
+ <div class="day-header">
+ <div class="badge-row">
+ <span class="badge day">DOOR 00</span>
+ <span class="badge cat">OSINT</span>
+ <span class="badge diff-easy">Easy</span>
+ </div>
+ <h1>The Brochure</h1>
+ </div>
+ <div class="content">
+ <figure class="shot"><img src="../images/image86.png" alt="" loading="lazy"></figure>
 <h2>Challenge Summary</h2>
 <p>The task provides a promotional brochure image for a fictional resort, &quot;The Byte Lotus Resort,&quot; along with a short in-fiction hint: a social media post from @0xMia claiming the brochure&#x27;s hero photo &quot;is giving... suspiciously perfect .&quot;</p>
 <p>The room description adds that the photo &quot;carries an unmistakable AI fingerprint, and the account behind it leads somewhere the hotel never intended you to look.&quot;</p>
@@ -74,18 +74,18 @@ THM{xxxxxxx}</pre></div>
 <p>I had transcribed post 2&#x27;s string with a lowercase l (X2lz) instead of the correct capital I (X2Iz). Since Base64 is case-sensitive, this small misread was enough to corrupt the decoded output.</p>
 <p>Lesson: when a decoded string comes out mostly readable with one garbled chunk, suspect a character misread rather than a wrong pivot  especially for visually similar characters like l/I/1, O/0, or S/5.</p>
 <h2>Key Takeaways</h2>
-<ul><li>Not every image challenge is a steganography challenge — check metadata/hidden files first, but don&#x27;t stop there.</li><li>Read the challenge flavor text closely; it often contains the actual investigative lead (here, &quot;the account behind it&quot;).</li><li>A &quot;Following&quot; list can be a more targeted pivot point than a follower list, especially when an account follows very few others.</li><li>Grid/thumbnail views on social platforms can crop or obscure image content — always check the full-resolution individual post before transcribing text from an image.</li><li>Base64 is case-sensitive; visually ambiguous characters (l/I/1, O/0) are a common source of decode errors;re-check your transcription if a decode looks almost right.</li></ul>
+<ul><li>Not every image challenge is a steganography challenge - check metadata/hidden files first, but don&#x27;t stop there.</li><li>Read the challenge flavor text closely; it often contains the actual investigative lead (here, &quot;the account behind it&quot;).</li><li>A &quot;Following&quot; list can be a more targeted pivot point than a follower list, especially when an account follows very few others.</li><li>Grid/thumbnail views on social platforms can crop or obscure image content - always check the full-resolution individual post before transcribing text from an image.</li><li>Base64 is case-sensitive; visually ambiguous characters (l/I/1, O/0) are a common source of decode errors;re-check your transcription if a decode looks almost right.</li></ul>
 <h2>Tools Used</h2>
 <ul><li>Python (PIL) for image cropping, zooming, and contrast enhancement</li><li>strings for basic file inspection</li><li>Instagram (manual OSINT following list, profile posts)</li><li>base64 (CLI) for decoding</li></ul>
-    </div>
-    <div class="day-pager"><span></span><a class="pager-btn next" href="day-1.html"><span class="lbl">Next →</span><span class="ttl">Day 01 · The Concierge Knows Too Much</span></a></div>
-  </main>
+ </div>
+ <div class="day-pager"><span></span><a class="pager-btn next" href="day-1.html"><span class="lbl">Next →</span><span class="ttl">Day 01 · The Concierge Knows Too Much</span></a></div>
+ </main>
 </div>
 <footer>
-  <div class="wrap">
-    Built for the TryHackMe <strong style="color:var(--text-muted)">Hacker Holidays</strong> event · write-ups for learning purposes only.<br>
-    <a href="https://tryhackme.com" target="_blank" rel="noopener">TryHackMe</a> · <a href="../index.html">Back to top</a>
-  </div>
+ <div class="wrap">
+ Built for the TryHackMe <strong style="color:var(--text-muted)">Hacker Holidays</strong> event · write-ups for learning purposes only.<br>
+ <a href="https://tryhackme.com" target="_blank" rel="noopener">TryHackMe</a> · <a href="../index.html">Back to top</a>
+ </div>
 </footer>
 
 <script src="../script.js"></script>

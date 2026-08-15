@@ -3,271 +3,270 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Hacker Holidays — CTF Write-ups</title>
+<title>Hacker Holidays - CTF Write-ups</title>
 <meta name="description" content="Write-ups for TryHackMe's Hacker Holidays 13-day CTF: OSINT, AI security, web exploitation, cloud, forensics and boot2root.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
 <style>
-  /* index-page-only tweaks, kept local so the shared stylesheet stays untouched */
-  .hero{
-    position:relative;
-    padding:0;
-    text-align:left;
-    overflow:hidden;
-    border-radius:0 0 22px 22px;
-    margin-bottom:56px;
-  }
-  .hero-img{
-    position:relative;
-    width:100%;
-    height:clamp(320px, 46vw, 480px);
-  }
-  .hero-img img{
-    width:100%; height:100%; object-fit:cover; object-position:center 65%;
-    filter:saturate(.9);
-  }
-  .hero-img::after{
-    content:"";
-    position:absolute; inset:0;
-    background:
-      linear-gradient(0deg, var(--bg) 0%, rgba(10,18,32,.72) 32%, rgba(10,18,32,.28) 62%, rgba(10,18,32,.08) 100%),
-      linear-gradient(100deg, rgba(10,18,32,.85) 0%, rgba(10,18,32,.35) 45%, rgba(10,18,32,.1) 70%);
-  }
-  .hero-text{
-    position:absolute; left:0; right:0; bottom:0;
-    padding:0 24px 34px;
-    max-width:var(--maxw);
-    margin:0 auto;
-  }
-  .hero-eyebrow{
-    font-family:var(--font-mono);
-    font-size:.8rem;
-    letter-spacing:.08em;
-    color:var(--teal);
-    margin:0 0 10px;
-  }
-  .hero-text h1{
-    font-family:var(--font-display);
-    font-size:clamp(2.1rem, 4.6vw, 3.6rem);
-    line-height:1.05;
-    margin:0 0 12px;
-    letter-spacing:-.01em;
-    max-width:700px;
-  }
-  .hero-text h1 .accent{ color:var(--gold); }
-  .hero-text p.sub{
-    max-width:560px;
-    color:var(--text-muted);
-    font-size:1.02rem;
-    margin:0;
-  }
-  @media (max-width:640px){
-    .hero-img{ height:340px; }
-    .hero-img img{ object-position:center 60%; }
-  }
+ /* index-page-only tweaks, kept local so the shared stylesheet stays untouched */
+ .hero{
+ position:relative;
+ padding:0;
+ text-align:left;
+ overflow:hidden;
+ border-radius:0 0 22px 22px;
+ margin-bottom:56px;
+ }
+ .hero-img{
+ position:relative;
+ width:100%;
+ height:clamp(320px, 46vw, 480px);
+ }
+ .hero-img img{
+ width:100%; height:100%; object-fit:cover; object-position:center 65%;
+ filter:saturate(.9);
+ }
+ .hero-img::after{
+ content:"";
+ position:absolute; inset:0;
+ background:
+ linear-gradient(0deg, var(--bg) 0%, rgba(10,18,32,.72) 32%, rgba(10,18,32,.28) 62%, rgba(10,18,32,.08) 100%),
+ linear-gradient(100deg, rgba(10,18,32,.85) 0%, rgba(10,18,32,.35) 45%, rgba(10,18,32,.1) 70%);
+ }
+ .hero-text{
+ position:absolute; left:0; right:0; bottom:0;
+ padding:0 24px 34px;
+ max-width:var(--maxw);
+ margin:0 auto;
+ }
+ .hero-eyebrow{
+ font-family:var(--font-mono);
+ font-size:.8rem;
+ letter-spacing:.08em;
+ color:var(--teal);
+ margin:0 0 10px;
+ }
+ .hero-text h1{
+ font-family:var(--font-display);
+ font-size:clamp(2.1rem, 4.6vw, 3.6rem);
+ line-height:1.05;
+ margin:0 0 12px;
+ letter-spacing:-.01em;
+ max-width:700px;
+ }
+ .hero-text h1 .accent{ color:var(--gold); }
+ .hero-text p.sub{
+ max-width:560px;
+ color:var(--text-muted);
+ font-size:1.02rem;
+ margin:0;
+ }
+ @media (max-width:640px){
+ .hero-img{ height:340px; }
+ .hero-img img{ object-position:center 60%; }
+ }
 </style>
 </head>
 <body>
 <main>
-  <section class="hero">
-    <div class="hero-img">
-      <img src="images/hero-resort.png" alt="The Byte Lotus resort at sunset, the fictional setting for the Hacker Holidays challenges">
-    </div>
-    <div class="hero-text">
-      <p class="hero-eyebrow">TRYHACKME · JUL 27 → AUG 9</p>
-      <h1>Hacker <span class="accent">Holidays</span></h1>
-      <p class="sub">A write-up log from The Byte Lotus resort — OSINT, prompt injection, cloud misconfigs, web exploits, and forensics, solved one day at a time.</p>
-    </div>
-  </section>
+ <section class="hero">
+ <div class="hero-img">
+ <img src="images/hero-resort.png" alt="The Byte Lotus resort at sunset, the fictional setting for the Hacker Holidays challenges">
+ </div>
+ <div class="hero-text">
+ <h1>Hacker <span class="accent">Holidays</span></h1>
+ <p class="sub">A write-up log from The Byte Lotus resort - OSINT, prompt injection, cloud misconfigs, web exploits, and forensics, solved one day at a time.</p>
+ </div>
+ </section>
 
-  <section class="wrap">
-    <div class="stats">
-      <div class="stat"><div class="num">14</div><div class="label">Challenges solved</div></div>
-      <div class="stat"><div class="num">7</div><div class="label">Categories</div></div>
-      <div class="stat"><div class="num">1</div><div class="label">Hard rooms</div></div>
-      <div class="stat"><div class="num" style="font-size:1.3rem;">Jul 27 – Aug 9</div><div class="label">Event window</div></div>
-    </div>
-  </section>
+ <section class="wrap">
+ <div class="stats">
+ <div class="stat"><div class="num">14</div><div class="label">Challenges solved</div></div>
+ <div class="stat"><div class="num">7</div><div class="label">Categories</div></div>
+ <div class="stat"><div class="num">1</div><div class="label">Hard rooms</div></div>
+ <div class="stat"><div class="num" style="font-size:1.3rem;">Jul 27 – Aug 9</div><div class="label">Event window</div></div>
+ </div>
+ </section>
 
-  <section class="intro-section wrap">
-    <div class="intro-card">
-      <h2>How this went</h2>
-      
-<p>14 days, 14 rooms, one fictional resort: The Byte Lotus. Each write-up below covers the recon, the dead ends, and the exploit that got the flag — starting with an easy OSINT hunt and ending with a full disk-forensics investigation.</p>
+ <section class="intro-section wrap">
+ <div class="intro-card">
+ <h2>How this went</h2>
+ 
+<p>14 days, 14 rooms, one fictional resort: The Byte Lotus. Each write-up below covers the recon, the dead ends, and the exploit that got the flag - starting with an easy OSINT hunt and ending with a full disk-forensics investigation.</p>
 
-    </div>
-  </section>
+ </div>
+ </section>
 
-  <section class="wrap" id="doors">
-    <div class="section-head">
-      <h2>The write-ups</h2>
-    </div>
-    <div class="door-grid">
-      <a class="door" href="days/day-0.html">
-  <img src="images/image86.png" alt="" loading="lazy" style="width:100%;height:110px;object-fit:cover;object-position:top;border-radius:8px;margin-bottom:2px;border:1px solid var(--border-soft);">
-  <div class="door-top">
-    <span class="door-num">DOOR <b>00</b></span>
-    <span class="door-arrow">→</span>
-  </div>
-  <h3>The Brochure</h3>
-  <div class="cat">OSINT</div>
-  <div class="door-meta">
-    <div class="diff"><span class="pip on easy"></span><span class="pip"></span><span class="pip"></span><span class="diff-label">Easy</span></div>
-  </div>
+ <section class="wrap" id="doors">
+ <div class="section-head">
+ <h2>The write-ups</h2>
+ </div>
+ <div class="door-grid">
+ <a class="door" href="days/day-0.html">
+ <img src="images/image86.png" alt="" loading="lazy" style="width:100%;height:110px;object-fit:cover;object-position:top;border-radius:8px;margin-bottom:2px;border:1px solid var(--border-soft);">
+ <div class="door-top">
+ <span class="door-num">DOOR <b>00</b></span>
+ <span class="door-arrow">→</span>
+ </div>
+ <h3>The Brochure</h3>
+ <div class="cat">OSINT</div>
+ <div class="door-meta">
+ <div class="diff"><span class="pip on easy"></span><span class="pip"></span><span class="pip"></span><span class="diff-label">Easy</span></div>
+ </div>
 </a><a class="door" href="days/day-1.html">
-  <img src="images/image84.png" alt="" loading="lazy" style="width:100%;height:110px;object-fit:cover;object-position:top;border-radius:8px;margin-bottom:2px;border:1px solid var(--border-soft);">
-  <div class="door-top">
-    <span class="door-num">DOOR <b>01</b></span>
-    <span class="door-arrow">→</span>
-  </div>
-  <h3>The Concierge Knows Too Much</h3>
-  <div class="cat">AI</div>
-  <div class="door-meta">
-    <div class="diff"><span class="pip on easy"></span><span class="pip"></span><span class="pip"></span><span class="diff-label">Easy</span></div>
-  </div>
+ <img src="images/image84.png" alt="" loading="lazy" style="width:100%;height:110px;object-fit:cover;object-position:top;border-radius:8px;margin-bottom:2px;border:1px solid var(--border-soft);">
+ <div class="door-top">
+ <span class="door-num">DOOR <b>01</b></span>
+ <span class="door-arrow">→</span>
+ </div>
+ <h3>The Concierge Knows Too Much</h3>
+ <div class="cat">AI</div>
+ <div class="door-meta">
+ <div class="diff"><span class="pip on easy"></span><span class="pip"></span><span class="pip"></span><span class="diff-label">Easy</span></div>
+ </div>
 </a><a class="door" href="days/day-2.html">
-  <img src="images/image21.png" alt="" loading="lazy" style="width:100%;height:110px;object-fit:cover;object-position:top;border-radius:8px;margin-bottom:2px;border:1px solid var(--border-soft);">
-  <div class="door-top">
-    <span class="door-num">DOOR <b>02</b></span>
-    <span class="door-arrow">→</span>
-  </div>
-  <h3>Room 404</h3>
-  <div class="cat">Web</div>
-  <div class="door-meta">
-    <div class="diff"><span class="pip on easy"></span><span class="pip"></span><span class="pip"></span><span class="diff-label">Easy</span></div>
-  </div>
+ <img src="images/image21.png" alt="" loading="lazy" style="width:100%;height:110px;object-fit:cover;object-position:top;border-radius:8px;margin-bottom:2px;border:1px solid var(--border-soft);">
+ <div class="door-top">
+ <span class="door-num">DOOR <b>02</b></span>
+ <span class="door-arrow">→</span>
+ </div>
+ <h3>Room 404</h3>
+ <div class="cat">Web</div>
+ <div class="door-meta">
+ <div class="diff"><span class="pip on easy"></span><span class="pip"></span><span class="pip"></span><span class="diff-label">Easy</span></div>
+ </div>
 </a><a class="door" href="days/day-3.html">
-  <img src="images/image72.png" alt="" loading="lazy" style="width:100%;height:110px;object-fit:cover;object-position:top;border-radius:8px;margin-bottom:2px;border:1px solid var(--border-soft);">
-  <div class="door-top">
-    <span class="door-num">DOOR <b>03</b></span>
-    <span class="door-arrow">→</span>
-  </div>
-  <h3>Complimentary</h3>
-  <div class="cat">Cloud</div>
-  <div class="door-meta">
-    <div class="diff"><span class="pip on easy"></span><span class="pip"></span><span class="pip"></span><span class="diff-label">Easy</span></div>
-  </div>
+ <img src="images/image72.png" alt="" loading="lazy" style="width:100%;height:110px;object-fit:cover;object-position:top;border-radius:8px;margin-bottom:2px;border:1px solid var(--border-soft);">
+ <div class="door-top">
+ <span class="door-num">DOOR <b>03</b></span>
+ <span class="door-arrow">→</span>
+ </div>
+ <h3>Complimentary</h3>
+ <div class="cat">Cloud</div>
+ <div class="door-meta">
+ <div class="diff"><span class="pip on easy"></span><span class="pip"></span><span class="pip"></span><span class="diff-label">Easy</span></div>
+ </div>
 </a><a class="door" href="days/day-4.html">
-  <img src="images/image19.png" alt="" loading="lazy" style="width:100%;height:110px;object-fit:cover;object-position:top;border-radius:8px;margin-bottom:2px;border:1px solid var(--border-soft);">
-  <div class="door-top">
-    <span class="door-num">DOOR <b>04</b></span>
-    <span class="door-arrow">→</span>
-  </div>
-  <h3>Packed Light</h3>
-  <div class="cat">Forensics</div>
-  <div class="door-meta">
-    <div class="diff"><span class="pip on easy"></span><span class="pip"></span><span class="pip"></span><span class="diff-label">Easy</span></div>
-  </div>
+ <img src="images/image19.png" alt="" loading="lazy" style="width:100%;height:110px;object-fit:cover;object-position:top;border-radius:8px;margin-bottom:2px;border:1px solid var(--border-soft);">
+ <div class="door-top">
+ <span class="door-num">DOOR <b>04</b></span>
+ <span class="door-arrow">→</span>
+ </div>
+ <h3>Packed Light</h3>
+ <div class="cat">Forensics</div>
+ <div class="door-meta">
+ <div class="diff"><span class="pip on easy"></span><span class="pip"></span><span class="pip"></span><span class="diff-label">Easy</span></div>
+ </div>
 </a><a class="door" href="days/day-5.html">
-  <img src="images/image2.png" alt="" loading="lazy" style="width:100%;height:110px;object-fit:cover;object-position:top;border-radius:8px;margin-bottom:2px;border:1px solid var(--border-soft);">
-  <div class="door-top">
-    <span class="door-num">DOOR <b>05</b></span>
-    <span class="door-arrow">→</span>
-  </div>
-  <h3>Beach Bar</h3>
-  <div class="cat">Boot2Root</div>
-  <div class="door-meta">
-    <div class="diff"><span class="pip on easy"></span><span class="pip"></span><span class="pip"></span><span class="diff-label">Easy</span></div>
-  </div>
+ <img src="images/image2.png" alt="" loading="lazy" style="width:100%;height:110px;object-fit:cover;object-position:top;border-radius:8px;margin-bottom:2px;border:1px solid var(--border-soft);">
+ <div class="door-top">
+ <span class="door-num">DOOR <b>05</b></span>
+ <span class="door-arrow">→</span>
+ </div>
+ <h3>Beach Bar</h3>
+ <div class="cat">Boot2Root</div>
+ <div class="door-meta">
+ <div class="diff"><span class="pip on easy"></span><span class="pip"></span><span class="pip"></span><span class="diff-label">Easy</span></div>
+ </div>
 </a><a class="door" href="days/day-6.html">
-  <img src="images/image59.png" alt="" loading="lazy" style="width:100%;height:110px;object-fit:cover;object-position:top;border-radius:8px;margin-bottom:2px;border:1px solid var(--border-soft);">
-  <div class="door-top">
-    <span class="door-num">DOOR <b>06</b></span>
-    <span class="door-arrow">→</span>
-  </div>
-  <h3>Overheard at Breakfast</h3>
-  <div class="cat">OSINT</div>
-  <div class="door-meta">
-    <div class="diff"><span class="pip on easy"></span><span class="pip"></span><span class="pip"></span><span class="diff-label">Easy</span></div>
-  </div>
+ <img src="images/image59.png" alt="" loading="lazy" style="width:100%;height:110px;object-fit:cover;object-position:top;border-radius:8px;margin-bottom:2px;border:1px solid var(--border-soft);">
+ <div class="door-top">
+ <span class="door-num">DOOR <b>06</b></span>
+ <span class="door-arrow">→</span>
+ </div>
+ <h3>Overheard at Breakfast</h3>
+ <div class="cat">OSINT</div>
+ <div class="door-meta">
+ <div class="diff"><span class="pip on easy"></span><span class="pip"></span><span class="pip"></span><span class="diff-label">Easy</span></div>
+ </div>
 </a><a class="door" href="days/day-7.html">
-  <img src="images/image26.png" alt="" loading="lazy" style="width:100%;height:110px;object-fit:cover;object-position:top;border-radius:8px;margin-bottom:2px;border:1px solid var(--border-soft);">
-  <div class="door-top">
-    <span class="door-num">DOOR <b>07</b></span>
-    <span class="door-arrow">→</span>
-  </div>
-  <h3>Do Not Disturb</h3>
-  <div class="cat">Boot2Root</div>
-  <div class="door-meta">
-    <div class="diff"><span class="pip on medium"></span><span class="pip on medium"></span><span class="pip"></span><span class="diff-label">Medium</span></div>
-  </div>
+ <img src="images/image26.png" alt="" loading="lazy" style="width:100%;height:110px;object-fit:cover;object-position:top;border-radius:8px;margin-bottom:2px;border:1px solid var(--border-soft);">
+ <div class="door-top">
+ <span class="door-num">DOOR <b>07</b></span>
+ <span class="door-arrow">→</span>
+ </div>
+ <h3>Do Not Disturb</h3>
+ <div class="cat">Boot2Root</div>
+ <div class="door-meta">
+ <div class="diff"><span class="pip on medium"></span><span class="pip on medium"></span><span class="pip"></span><span class="diff-label">Medium</span></div>
+ </div>
 </a><a class="door" href="days/day-8.html">
-  <img src="images/image92.png" alt="" loading="lazy" style="width:100%;height:110px;object-fit:cover;object-position:top;border-radius:8px;margin-bottom:2px;border:1px solid var(--border-soft);">
-  <div class="door-top">
-    <span class="door-num">DOOR <b>08</b></span>
-    <span class="door-arrow">→</span>
-  </div>
-  <h3>Towel on the sunbed</h3>
-  <div class="cat">Web Exploitation</div>
-  <div class="door-meta">
-    <div class="diff"><span class="pip on medium"></span><span class="pip on medium"></span><span class="pip"></span><span class="diff-label">Medium</span></div>
-  </div>
+ <img src="images/image92.png" alt="" loading="lazy" style="width:100%;height:110px;object-fit:cover;object-position:top;border-radius:8px;margin-bottom:2px;border:1px solid var(--border-soft);">
+ <div class="door-top">
+ <span class="door-num">DOOR <b>08</b></span>
+ <span class="door-arrow">→</span>
+ </div>
+ <h3>Towel on the sunbed</h3>
+ <div class="cat">Web Exploitation</div>
+ <div class="door-meta">
+ <div class="diff"><span class="pip on medium"></span><span class="pip on medium"></span><span class="pip"></span><span class="diff-label">Medium</span></div>
+ </div>
 </a><a class="door" href="days/day-9.html">
-  <img src="images/image91.png" alt="" loading="lazy" style="width:100%;height:110px;object-fit:cover;object-position:top;border-radius:8px;margin-bottom:2px;border:1px solid var(--border-soft);">
-  <div class="door-top">
-    <span class="door-num">DOOR <b>09</b></span>
-    <span class="door-arrow">→</span>
-  </div>
-  <h3>CryptoCabana</h3>
-  <div class="cat">Cloud</div>
-  <div class="door-meta">
-    <div class="diff"><span class="pip on medium"></span><span class="pip on medium"></span><span class="pip"></span><span class="diff-label">Medium</span></div>
-  </div>
+ <img src="images/image91.png" alt="" loading="lazy" style="width:100%;height:110px;object-fit:cover;object-position:top;border-radius:8px;margin-bottom:2px;border:1px solid var(--border-soft);">
+ <div class="door-top">
+ <span class="door-num">DOOR <b>09</b></span>
+ <span class="door-arrow">→</span>
+ </div>
+ <h3>CryptoCabana</h3>
+ <div class="cat">Cloud</div>
+ <div class="door-meta">
+ <div class="diff"><span class="pip on medium"></span><span class="pip on medium"></span><span class="pip"></span><span class="diff-label">Medium</span></div>
+ </div>
 </a><a class="door" href="days/day-10.html">
-  <img src="images/image33.png" alt="" loading="lazy" style="width:100%;height:110px;object-fit:cover;object-position:top;border-radius:8px;margin-bottom:2px;border:1px solid var(--border-soft);">
-  <div class="door-top">
-    <span class="door-num">DOOR <b>10</b></span>
-    <span class="door-arrow">→</span>
-  </div>
-  <h3>The Hollow Shell</h3>
-  <div class="cat">Web</div>
-  <div class="door-meta">
-    <div class="diff"><span class="pip on medium"></span><span class="pip on medium"></span><span class="pip"></span><span class="diff-label">Medium</span></div>
-  </div>
+ <img src="images/image33.png" alt="" loading="lazy" style="width:100%;height:110px;object-fit:cover;object-position:top;border-radius:8px;margin-bottom:2px;border:1px solid var(--border-soft);">
+ <div class="door-top">
+ <span class="door-num">DOOR <b>10</b></span>
+ <span class="door-arrow">→</span>
+ </div>
+ <h3>The Hollow Shell</h3>
+ <div class="cat">Web</div>
+ <div class="door-meta">
+ <div class="diff"><span class="pip on medium"></span><span class="pip on medium"></span><span class="pip"></span><span class="diff-label">Medium</span></div>
+ </div>
 </a><a class="door" href="days/day-12.html">
-  <img src="images/image47.png" alt="" loading="lazy" style="width:100%;height:110px;object-fit:cover;object-position:top;border-radius:8px;margin-bottom:2px;border:1px solid var(--border-soft);">
-  <div class="door-top">
-    <span class="door-num">DOOR <b>12</b></span>
-    <span class="door-arrow">→</span>
-  </div>
-  <h3>After Hours</h3>
-  <div class="cat">Forensics</div>
-  <div class="door-meta">
-    <div class="diff"><span class="pip on medium"></span><span class="pip on medium"></span><span class="pip"></span><span class="diff-label">Medium</span></div>
-  </div>
+ <img src="images/image47.png" alt="" loading="lazy" style="width:100%;height:110px;object-fit:cover;object-position:top;border-radius:8px;margin-bottom:2px;border:1px solid var(--border-soft);">
+ <div class="door-top">
+ <span class="door-num">DOOR <b>12</b></span>
+ <span class="door-arrow">→</span>
+ </div>
+ <h3>After Hours</h3>
+ <div class="cat">Forensics</div>
+ <div class="door-meta">
+ <div class="diff"><span class="pip on medium"></span><span class="pip on medium"></span><span class="pip"></span><span class="diff-label">Medium</span></div>
+ </div>
 </a><a class="door" href="days/day-13.html">
-  <img src="images/image81.png" alt="" loading="lazy" style="width:100%;height:110px;object-fit:cover;object-position:top;border-radius:8px;margin-bottom:2px;border:1px solid var(--border-soft);">
-  <div class="door-top">
-    <span class="door-num">DOOR <b>13</b></span>
-    <span class="door-arrow">→</span>
-  </div>
-  <h3>The Guestbook</h3>
-  <div class="cat">AI</div>
-  <div class="door-meta">
-    <div class="diff"><span class="pip on medium"></span><span class="pip on medium"></span><span class="pip"></span><span class="diff-label">Medium</span></div>
-  </div>
+ <img src="images/image81.png" alt="" loading="lazy" style="width:100%;height:110px;object-fit:cover;object-position:top;border-radius:8px;margin-bottom:2px;border:1px solid var(--border-soft);">
+ <div class="door-top">
+ <span class="door-num">DOOR <b>13</b></span>
+ <span class="door-arrow">→</span>
+ </div>
+ <h3>The Guestbook</h3>
+ <div class="cat">AI</div>
+ <div class="door-meta">
+ <div class="diff"><span class="pip on medium"></span><span class="pip on medium"></span><span class="pip"></span><span class="diff-label">Medium</span></div>
+ </div>
 </a><a class="door" href="days/day-14.html">
-  <img src="images/image51.png" alt="" loading="lazy" style="width:100%;height:110px;object-fit:cover;object-position:top;border-radius:8px;margin-bottom:2px;border:1px solid var(--border-soft);">
-  <div class="door-top">
-    <span class="door-num">DOOR <b>14</b></span>
-    <span class="door-arrow">→</span>
-  </div>
-  <h3>Management Wants a Word</h3>
-  <div class="cat">Forensics</div>
-  <div class="door-meta">
-    <div class="diff"><span class="pip on hard"></span><span class="pip on hard"></span><span class="pip on hard"></span><span class="diff-label">Hard</span></div>
-  </div>
+ <img src="images/image51.png" alt="" loading="lazy" style="width:100%;height:110px;object-fit:cover;object-position:top;border-radius:8px;margin-bottom:2px;border:1px solid var(--border-soft);">
+ <div class="door-top">
+ <span class="door-num">DOOR <b>14</b></span>
+ <span class="door-arrow">→</span>
+ </div>
+ <h3>Management Wants a Word</h3>
+ <div class="cat">Forensics</div>
+ <div class="door-meta">
+ <div class="diff"><span class="pip on hard"></span><span class="pip on hard"></span><span class="pip on hard"></span><span class="diff-label">Hard</span></div>
+ </div>
 </a>
-    </div>
-  </section>
+ </div>
+ </section>
 </main>
 <footer>
-  <div class="wrap">
-    Built for the TryHackMe <strong style="color:var(--text-muted)">Hacker Holidays</strong> event · write-ups for learning purposes only.<br>
-    <a href="https://tryhackme.com" target="_blank" rel="noopener">TryHackMe</a> · <a href="index.html">Back to top</a>
-  </div>
+ <div class="wrap">
+ Built for the TryHackMe <strong style="color:var(--text-muted)">Hacker Holidays</strong> event · write-ups for learning purposes only.<br>
+ <a href="https://tryhackme.com" target="_blank" rel="noopener">TryHackMe</a> · <a href="index.html">Back to top</a>
+ </div>
 </footer>
 
 <script src="script.js"></script>
